@@ -45,7 +45,7 @@
     //
     // Local Members
     //
-    var startTime = Date.now();
+    var startTime = performance.now();
 
     //
     // Constants
@@ -141,10 +141,34 @@
                 name: "DOM Nodes",
                 data: []
             },
+        "domdoc":
+            {
+                color: 'pink',
+                name: "DOM Docs",
+                data: []
+            },
+        "domimg":
+            {
+                color: 'pink',
+                name: "DOM IMG",
+                data: []
+            },
+        "domscript":
+            {
+                color: 'pink',
+                name: "DOM SCRIPT",
+                data: []
+            },
         "domsize":
             {
                 color: 'white',
                 name: "DOM Size (kb)",
+                data: []
+            },
+        "jsheap":
+            {
+                color: 'white',
+                name: "JS Heap (kb)",
                 data: []
             },
     };
@@ -169,7 +193,7 @@
          * @returns {number} Current time
          */
         function getTime() {
-            return Math.floor((Date.now() - startTime) / COLLECTION_INTERVAL);
+            return Math.floor((performance.now() - startTime) / COLLECTION_INTERVAL);
         }
 
         /**
@@ -242,7 +266,7 @@
         //
 
         // time we last fired
-        var last = Date.now();
+        var last = performance.now();
 
         // number of times we fired in this interval
         var total = 0;
@@ -257,7 +281,7 @@
          * Run at each polling interval, detecting if we ran late at all
          */
         function checkBusy() {
-            var now = Date.now();
+            var now = performance.now();
             var delta = now - last;
             last = now;
 
@@ -324,7 +348,7 @@
         var totalFrames = 0;
 
         // time we started monitoring
-        var frameStartTime = Date.now();
+        var frameStartTime = performance.now();
 
         /**
          * requestAnimationFrame callback
@@ -585,8 +609,8 @@
                             mutationCount += node.getElementsByTagName ? node.getElementsByTagName("*").length : 0;
                         }
                     }
-				}
-			});
+                }
+            });
         });
 
         // configuration of the observer:
@@ -614,6 +638,9 @@
         function reportCounts() {
             // report on other metrics
             collector.set("domlength", domLength);
+            collector.set("domdoc", document.getElementsByTagName("iframe").length);
+            collector.set("domimg", document.getElementsByTagName("img").length);
+            collector.set("domscript", document.getElementsByTagName("script").length);
 
             var graph = document.getElementById("perf-graph");
             var graphLength = graph ? graph.innerHTML.length : 0;
@@ -627,6 +654,22 @@
         reportCounts();
 
         setInterval(reportMutations, COLLECTION_INTERVAL);
+    })(perfCollector);
+
+    //
+    // JsHeapMonitor
+    //
+    var jsHeapMonitor = (function(collector) {
+        function reportJsHeap() {
+            var mem = "performance" in window
+              && window.performance
+              && window.performance.memory
+              && window.performance.memory.usedJSHeapSize;
+
+            collector.set("jsheap", Math.round(mem / 1024));
+        }
+
+        setInterval(reportJsHeap, COLLECTION_INTERVAL);
     })(perfCollector);
 
     //
